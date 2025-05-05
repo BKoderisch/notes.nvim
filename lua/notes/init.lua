@@ -33,6 +33,14 @@ local function create_floating_window(opts)
       local lines = vim.fn.readfile(notes_path)
       vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
     end
+
+    vim.api.nvim_create_autocmd("BufWinLeave", {
+      buffer = buf,
+      callback = function()
+        local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+        vim.fn.writefile(lines, notes_path)
+      end,
+    })
   end
 
   -- Define window configuration
