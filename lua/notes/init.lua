@@ -28,6 +28,11 @@ local function create_floating_window(opts)
     vim.api.nvim_buf_set_name(buf, notes_path)
     vim.bo[buf].buftype = ''
     vim.bo[buf].filetype = 'markdown'
+
+    if vim.fn.filereadable(notes_path) then
+      local lines = vim.fn.readfile(notes_path)
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+    end
   end
 
   -- Define window configuration
