@@ -13,6 +13,7 @@ end
 
 local function create_floating_window(opts)
   opts = opts or {}
+  local notes_path = vim.fn.stdpath('data') .. '/notes.txt'
   local width = opts.width or math.floor(vim.o.columns * 0.45)
   local height = opts.height or math.floor(vim.o.lines * 0.8)
 
@@ -24,7 +25,6 @@ local function create_floating_window(opts)
     buf = opts.buf
   else
     buf = vim.api.nvim_create_buf(true, false)
-    local notes_path = vim.fn.stdpath('data') .. '/notes.txt'
     vim.api.nvim_buf_set_name(buf, notes_path)
     vim.bo[buf].buftype = ''
     vim.bo[buf].filetype = 'markdown'
@@ -33,14 +33,6 @@ local function create_floating_window(opts)
       local lines = vim.fn.readfile(notes_path)
       vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
     end
-
-    vim.api.nvim_create_autocmd("BufWinLeave", {
-      buffer = buf,
-      callback = function()
-        local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-        vim.fn.writefile(lines, notes_path)
-      end,
-    })
   end
 
   -- Define window configuration
@@ -58,6 +50,7 @@ local function create_floating_window(opts)
   -- Create the floating window
   local win = vim.api.nvim_open_win(buf, true, win_config)
 
+
   return { buf = buf, win = win }
 end
 
@@ -66,6 +59,7 @@ function M.toggle_window()
     state.floating = create_floating_window { buf = state.floating.buf }
   else
     vim.api.nvim_win_hide(state.floating.win)
+    vim.api.nvim_buf_delete(state.floating.buf, { force = true })
   end
 end
 
