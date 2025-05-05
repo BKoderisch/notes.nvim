@@ -1,7 +1,5 @@
 local M = {}
 
-vim.keymap.set("t", "<esc><esc>", "<c-\\><c-n>")
-
 local state = {
   floating = {
     buf = -1,
@@ -9,12 +7,15 @@ local state = {
   }
 }
 
+function M.setup()
+  vim.api.nvim_create_user_command("Note", M.toggle_window, {})
+end
+
 local function create_floating_window(opts)
   opts = opts or {}
   local width = opts.width or math.floor(vim.o.columns * 0.45)
   local height = opts.height or math.floor(vim.o.lines * 0.8)
 
-  -- Calculate the position to center the window
   local col = math.floor((vim.o.columns - width) / 1.1)
   local row = math.floor((vim.o.lines - height) / 2.5)
 
@@ -23,6 +24,10 @@ local function create_floating_window(opts)
     buf = opts.buf
   else
     buf = vim.api.nvim_create_buf(true, false)
+    local notes_path = vim.fn.stdpath('data') .. '/notes.txt'
+    vim.api.nvim_buf_set_name(buf, notes_path)
+    vim.bo[buf].buftype = ''
+    vim.bo[buf].filetype = 'markdown'
   end
 
   -- Define window configuration
@@ -50,9 +55,5 @@ function M.toggle_window()
     vim.api.nvim_win_hide(state.floating.win)
   end
 end
-
--- Create a floating window with default dimensions
-vim.api.nvim_create_user_command("Note", M.toggle_window, {})
-vim.keymap.set("n", "<leader>n", ":Note<CR>")
 
 return M
