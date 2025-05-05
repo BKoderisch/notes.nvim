@@ -50,7 +50,6 @@ local function create_floating_window(opts)
   -- Create the floating window
   local win = vim.api.nvim_open_win(buf, true, win_config)
 
-
   return { buf = buf, win = win }
 end
 
