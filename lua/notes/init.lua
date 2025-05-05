@@ -6,14 +6,20 @@ local state = {
     win = -1,
   }
 }
+local notes_path = vim.fn.stdpath('data') .. '/notes.txt'
 
 function M.setup()
   vim.api.nvim_create_user_command("Note", M.toggle_window, {})
 end
 
+local function save_buf_to_file(buf, file)
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  vim.fn.writefile(lines, file)
+end
+
+
 local function create_floating_window(opts)
   opts = opts or {}
-  local notes_path = vim.fn.stdpath('data') .. '/notes.txt'
   local width = opts.width or math.floor(vim.o.columns * 0.45)
   local height = opts.height or math.floor(vim.o.lines * 0.8)
 
@@ -50,6 +56,22 @@ local function create_floating_window(opts)
   -- Create the floating window
   local win = vim.api.nvim_open_win(buf, true, win_config)
 
+  vim.api.nvim_create_autocmd("WinLeave", {
+    once = true,
+    callback = function()
+      if vim.api.nvim_buf_is_valid(buf) then
+        save_buf_to_file(buf, notes_path)
+      end
+      if vim.api.nvim_win_is_valid(win) then
+        vim.api.nvim_win_close(win, true)
+      end
+      if vim.api.nvim_buf_is_valid(buf) then
+        vim.api.nvim_buf_delete(buf, { force = true })
+      end
+      state.floating = { buf = -1, win = -1 }
+    end,
+  })
+
   return { buf = buf, win = win }
 end
 
@@ -58,7 +80,6 @@ function M.toggle_window()
     state.floating = create_floating_window { buf = state.floating.buf }
   else
     vim.api.nvim_win_hide(state.floating.win)
-    vim.api.nvim_buf_delete(state.floating.buf, { force = true })
   end
 end
 
