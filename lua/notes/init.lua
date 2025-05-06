@@ -1,3 +1,5 @@
+local git = require("notes.git")
+
 local M = {}
 
 local state = {
@@ -6,10 +8,15 @@ local state = {
     win = -1,
   }
 }
-local notes_path = vim.fn.stdpath('data') .. '/notes.txt'
+local global_notes_path = vim.fn.stdpath('data')
 
 function M.setup()
   vim.api.nvim_create_user_command("Note", M.toggle_window, {})
+end
+
+local function get_git_root()
+  local path = vim.fn.expand("%:p:h")
+  return git.get_git_root(path)
 end
 
 local function save_buf_to_file(buf, file)
@@ -31,12 +38,12 @@ local function create_floating_window(opts)
     buf = opts.buf
   else
     buf = vim.api.nvim_create_buf(true, false)
-    vim.api.nvim_buf_set_name(buf, notes_path)
+    vim.api.nvim_buf_set_name(buf, opts.notes_path)
     vim.bo[buf].buftype = ''
     vim.bo[buf].filetype = 'markdown'
 
-    if vim.fn.filereadable(notes_path) then
-      local lines = vim.fn.readfile(notes_path)
+    if vim.fn.filereadable(opts.notes_path) == 1 then
+      local lines = vim.fn.readfile(opts.notes_path)
       vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
     end
   end
@@ -60,7 +67,7 @@ local function create_floating_window(opts)
     once = true,
     callback = function()
       if vim.api.nvim_buf_is_valid(buf) then
-        save_buf_to_file(buf, notes_path)
+        save_buf_to_file(buf, opts.notes_path)
       end
       if vim.api.nvim_win_is_valid(win) then
         vim.api.nvim_win_close(win, true)
@@ -77,7 +84,11 @@ end
 
 function M.toggle_window()
   if not vim.api.nvim_win_is_valid(state.floating.win) then
-    state.floating = create_floating_window { buf = state.floating.buf }
+    local path = get_git_root()
+    if path == nil then
+      path = global_notes_path
+    end
+    state.floating = create_floating_window { buf = state.floating.buf, notes_path = path .. "/notes.txt" }
   else
     vim.api.nvim_win_hide(state.floating.win)
   end
