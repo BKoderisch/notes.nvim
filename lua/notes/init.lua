@@ -87,6 +87,8 @@ function M.toggle_window()
     local path = get_git_root()
     if path == nil then
       path = global_notes_path
+    else
+      git.add_to_git_exclude_file(path, "notes.txt")
     end
     state.floating = create_floating_window { buf = state.floating.buf, notes_path = path .. "/notes.txt" }
   else
