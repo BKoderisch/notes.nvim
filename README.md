@@ -12,8 +12,12 @@ This plugin is designed to make note-taking within Neovim fast and frictionless.
 {
   "BKoderisch/notes.nvim",
   config = function()
-    require("notes").setup() -- required
-    -- example Keymapping
+    require("notes").setup({
+        -- optional setup of window position
+        -- position = "right" -- (default) buffer is located only on the right side of the window - better visibiliy over notes and code
+        -- position = "full" -- buffer is centered over the window - maximum space
+    })
+    -- example keymapping
     vim.keymap.set("n", "<leader>n", ":Note toggle<CR>", { desc = "Toggle project note" })
     vim.keymap.set("n", "<leader>N", ":Note global<CR>", { desc = "Toggle global note" })
   end,

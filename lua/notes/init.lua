@@ -8,9 +8,15 @@ local state = {
     win = -1,
   }
 }
+
+local config = {
+  position = "right"
+}
+
 local global_notes_path = vim.fn.stdpath('data')
 
-function M.setup()
+function M.setup(conf)
+  config = vim.tbl_deep_extend("force", config, conf or {})
   vim.api.nvim_create_user_command("Note", function(opts)
     if opts.args == "toggle" then
       M.toggle_window()
@@ -37,11 +43,23 @@ end
 
 local function create_floating_window(opts)
   opts = opts or {}
-  local width = opts.width or math.floor(vim.o.columns * 0.45)
-  local height = opts.height or math.floor(vim.o.lines * 0.8)
 
-  local col = math.floor((vim.o.columns - width) / 1.1)
-  local row = math.floor((vim.o.lines - height) / 2.5)
+  local width
+  local height
+
+  local row
+  local col
+  if config.position == "full" then
+    width = opts.width or math.floor(vim.o.columns * 0.8)
+    height = opts.height or math.floor(vim.o.lines * 0.85)
+    col = math.floor((vim.o.columns - width) / 2)
+    row = math.floor((vim.o.lines - height) / 4)
+  else
+    width = opts.width or math.floor(vim.o.columns * 0.45)
+    height = opts.height or math.floor(vim.o.lines * 0.8)
+    col = math.floor((vim.o.columns - width) / 1.1)
+    row = math.floor((vim.o.lines - height) / 2.5)
+  end
 
   local buf = nil
   if vim.api.nvim_buf_is_valid(opts.buf) then
