@@ -11,7 +11,17 @@ local state = {
 local global_notes_path = vim.fn.stdpath('data')
 
 function M.setup()
-  vim.api.nvim_create_user_command("Note", M.toggle_window, {})
+  vim.api.nvim_create_user_command("Note", function(opts)
+    if opts.args == "toggle" then
+      M.toggle_window()
+    elseif opts.args == "global" then
+      M.toggle_global()
+    else
+      print("Unknown subcommand: " .. opts.args)
+    end
+  end, {
+    nargs = 1,
+  })
 end
 
 local function get_git_root()
@@ -90,6 +100,15 @@ function M.toggle_window()
     else
       git.add_to_git_exclude_file(path, "notes.txt")
     end
+    state.floating = create_floating_window { buf = state.floating.buf, notes_path = path .. "/notes.txt" }
+  else
+    vim.api.nvim_win_hide(state.floating.win)
+  end
+end
+
+function M.toggle_global()
+  local path = global_notes_path
+  if not vim.api.nvim_win_is_valid(state.floating.win) then
     state.floating = create_floating_window { buf = state.floating.buf, notes_path = path .. "/notes.txt" }
   else
     vim.api.nvim_win_hide(state.floating.win)

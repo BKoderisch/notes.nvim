@@ -1,4 +1,0 @@
-Todo
-
-x File to Git except
-- seperate command for git and global note
