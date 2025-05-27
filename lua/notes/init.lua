@@ -6,6 +6,9 @@ local state = {
   floating = {
     buf = -1,
     win = -1,
+  },
+  cursor_pos = {
+    default = { -1, -1 }
   }
 }
 
@@ -91,6 +94,15 @@ local function create_floating_window(opts)
   -- Create the floating window
   local win = vim.api.nvim_open_win(buf, true, win_config)
 
+  -- set cursor to last position
+  local path = string.sub(opts.notes_path, 1, -11)
+
+  local pos = state.cursor_pos[path]
+
+  if (pos ~= nil) then
+    vim.api.nvim_win_set_cursor(win, pos)
+  end
+
   vim.api.nvim_create_autocmd("WinLeave", {
     once = true,
     callback = function()
@@ -110,16 +122,25 @@ local function create_floating_window(opts)
   return { buf = buf, win = win }
 end
 
+local function get_path()
+  local is_git = true
+  local path = get_git_root()
+  if path == nil then
+    is_git = false
+    path = global_notes_path
+  end
+  return path, is_git
+end
+
 function M.toggle_window()
+  local path, is_git = get_path()
   if not vim.api.nvim_win_is_valid(state.floating.win) then
-    local path = get_git_root()
-    if path == nil then
-      path = global_notes_path
-    else
+    if (is_git) then
       git.add_to_git_exclude_file(path, "notes.txt")
     end
     state.floating = create_floating_window { buf = state.floating.buf, notes_path = path .. "/notes.txt" }
   else
+    state.cursor_pos[path] = vim.api.nvim_win_get_cursor(state.floating.win)
     vim.api.nvim_win_hide(state.floating.win)
   end
 end
@@ -129,6 +150,7 @@ function M.toggle_global()
   if not vim.api.nvim_win_is_valid(state.floating.win) then
     state.floating = create_floating_window { buf = state.floating.buf, notes_path = path .. "/notes.txt" }
   else
+    state.cursor_pos[path] = vim.api.nvim_win_get_cursor(state.floating.win)
     vim.api.nvim_win_hide(state.floating.win)
   end
 end
